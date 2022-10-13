@@ -42,24 +42,68 @@ router.get('/:id', (req, res) => {
 router.post('/', (req, res) => {
   // create a new category
    // expects {title: 'Taskmaster goes public!', post_url: 'https://taskmaster.com/press', user_id: 1}
-   Post.create({
-    title: req.body.title,
-    post_url: req.body.post_url,
-    user_id: req.body.user_id
-  })
+   Category.create({
+    id: req.body.category_id,
+    category_name: req.body.category_name
+  }).then(() => {
+    return Category.findOne({
+      where: {
+        id: req.body.category_id
+      },
+      attributes: [
+        'id',
+        'category_name'
+      ]
+    })
     .then(dbPostData => res.json(dbPostData))
     .catch(err => {
       console.log(err);
-      res.status(500).json(err);
-    });
+      res.status(400).json(err);
+    })
+  });
 });
-
 router.put('/:id', (req, res) => {
   // update a category by its `id` value
+  Category.create({
+    id: req.body.category_id,
+    category_name: req.body.category_name
+  }).then(() => {
+    return Category.findOne({
+      where: {
+        id: req.body.category_id
+      },
+      attributes: [
+        'id',
+        'category_name'
+      ]
+    })
+    .then(dbPostData => res.json(dbPostData))
+    .catch(err => {
+      console.log(err);
+      res.status(400).json(err);
+    })
+  });
 });
-
 router.delete('/:id', (req, res) => {
   // delete a category by its `id` value
+  const sql = `DELETE FROM categories WHERE id = ?`;
+
+  db.query(sql, req.params.id, (err, result) => {
+    if (err) {
+      res.status(400).json({ error: res.message });
+    } else if (!result.affectedRows) {
+      res.json({
+        message: 'categories not found'
+      });
+    } else {
+      res.json({
+        message: 'deleted',
+        changes: result.affectedRows,
+        id: req.params.id
+      });
+    }
+  });
 });
+
 
 module.exports = router;
