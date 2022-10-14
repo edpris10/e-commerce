@@ -63,25 +63,27 @@ router.post('/', (req, res) => {
 
 router.put('/:id', (req, res) => {
   // update a tag's name by its `id` value
-  Tag.create({
-    id: req.body.tag_id,
-    tag_name: req.body.tag_name
-  }).then(() => {
-    return Tag.findOne({
+  Tag.update(
+    {
+      tag_name: req.body.tag_name
+    },
+    {
       where: {
-        id: req.body.tag_id
-      },
-      attributes: [
-        'id',
-        'tag_name'
-      ]
+        id: req.params.id
+      }
+    }
+  )
+    .then(dbPostData => {
+      if (!dbPostData) {
+        res.status(404).json({ message: 'No post found with this id' });
+        return;
+      }
+      res.json(dbPostData);
     })
-    .then(dbPostData => res.json(dbPostData))
     .catch(err => {
       console.log(err);
-      res.status(400).json(err);
-    })
-  });
+      res.status(500).json(err);
+    });
 });
 
 router.delete('/:id', (req, res) => {
