@@ -7,8 +7,8 @@ const { Product, Category, Tag, ProductTag } = require('../../models');
 router.get('/', (req, res) => {
   // find all products
   // be sure to include its associated Category and Tag data
-  Category.findAll().then((categoryData) => {
-    res.json(categoryData);
+  Product.findAll().then((productData) => {
+    res.json(productData);
   });
 });
 
@@ -18,13 +18,17 @@ router.get('/:id', (req, res) => {
   // be sure to include its associated Category and Tag data
   Product.findOne({
     where: {
-      id: req.params.id
+      product_name: req.params.product_name
     },
-    attributes: ['id','product_name', 'price','stock','category_id'],
+    attributes: ['id','product_name', 'price','stock'],
     include: [
       {
-        model: Product,
-        attributes: ['id', 'product_name',  'price', 'stock', 'category_id']
+        model: Category,
+        attributes: ['id', 'category_name']
+      },
+      {
+        model: Tag,
+        attributes: ['id']
       }
     ]
   })
@@ -78,7 +82,7 @@ router.put('/:id', (req, res) => {
   // update product data
   Product.update(req.body, {
     where: {
-      id: req.params.id,
+      product_name: req.params.product_name,
     },
   })
     .then((product) => {
@@ -117,23 +121,22 @@ router.put('/:id', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   // delete one product by its `id` value
-  const sql = `DELETE FROM product WHERE id = ?`;
-
-  db.query(sql, req.params.id, (err, result) => {
-    if (err) {
-      res.status(400).json({ error: res.message });
-    } else if (!result.affectedRows) {
-      res.json({
-        message: 'product not found'
-      });
-    } else {
-      res.json({
-        message: 'deleted',
-        changes: result.affectedRows,
-        id: req.params.id
-      });
+  Product.destroy({
+    where: {
+      id: req.params.id
     }
-  });
+  })
+    .then(dbPostData => {
+      if (!dbPostData) {
+        res.status(404).json({ message: 'No product found with this id' });
+        return;
+      }
+      res.json(dbPostData);
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json(err);
+    });
 });
 
 module.exports = router;

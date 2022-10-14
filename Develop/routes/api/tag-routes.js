@@ -21,8 +21,8 @@ router.get('/:id', (req, res) => {
     attributes: ['id','tag_name'],
     include: [
       {
-        model: Tag,
-        attributes: ['id', 'tag_name']
+        model: Product,
+        attributes: ['id','product_name', 'price','stock']
       }
     ]
   })
@@ -42,12 +42,11 @@ router.get('/:id', (req, res) => {
 router.post('/', (req, res) => {
   // create a new tag
   Tag.create({
-    id: req.body.tag_id,
     tag_name: req.body.tag_name
   }).then(() => {
     return Tag.findOne({
       where: {
-        id: req.body.category_id
+        tag_name: req.body.tag_name
       },
       attributes: [
         'id',
@@ -87,23 +86,22 @@ router.put('/:id', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   // delete on tag by its `id` value
-  const sql = `DELETE FROM tag WHERE id = ?`;
-
-  db.query(sql, req.params.id, (err, result) => {
-    if (err) {
-      res.status(400).json({ error: res.message });
-    } else if (!result.affectedRows) {
-      res.json({
-        message: 'tag not found'
-      });
-    } else {
-      res.json({
-        message: 'deleted',
-        changes: result.affectedRows,
-        id: req.params.id
-      });
+  Tag.destroy({
+    where: {
+      id: req.params.id
     }
-  });
+  })
+    .then(dbPostData => {
+      if (!dbPostData) {
+        res.status(404).json({ message: 'No tag found with this id' });
+        return;
+      }
+      res.json(dbPostData);
+    })
+    .catch(err => {
+      console.log(err);
+      res.status(500).json(err);
+    });
 });
 
 module.exports = router;
